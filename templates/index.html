@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Camera to PDF</title>
+    <style>
+        body { font-family: Arial; text-align: center; margin-top: 30px; }
+        video { width: 90%; max-width: 350px; border: 2px solid #444; }
+        button { padding: 12px 20px; margin-top: 10px; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+<h2>التقاط ورقة وتحويلها إلى PDF</h2>
+
+<video id="camera" autoplay playsinline></video><br>
+<button onclick="capture()">التقاط</button>
+
+<canvas id="snapshot" style="display:none;"></canvas>
+
+<script>
+    // فتح الكاميرا — Replit يسمح فقط عبر HTTPS
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            document.getElementById('camera').srcObject = stream;
+        })
+        .catch(err => alert("الكاميرا غير مسموح بها في المتصفح: " + err));
+
+    function capture() {
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('snapshot');
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        canvas.getContext('2d').drawImage(video, 0, 0);
+
+        canvas.toBlob(blob => {
+            const formData = new FormData();
+            formData.append("image", blob, "capture.jpg");
+
+            fetch("/process", { method: "POST", body: formData })
+                .then(res => res.blob())
+                .then(fileBlob => {
+                    const url = window.URL.createObjectURL(fileBlob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "document.pdf";
+                    a.click();
+                });
+        }, "image/jpeg");
+    }
+</script>
+</body>
+</html>
